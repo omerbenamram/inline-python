@@ -1,6 +1,6 @@
 use crate::run::run_python_code;
 use crate::PythonBlock;
-use pyo3::{types::PyDict, FromPyObject, Py, PyObject, PyResult, Python, ToPyObject};
+use pyo3::{types::PyCFunction, types::PyDict, FromPyObject, Py, PyErr, PyObject, PyResult, Python, ToPyObject};
 
 /// An execution context for Python code.
 ///
@@ -36,6 +36,20 @@ use pyo3::{types::PyDict, FromPyObject, Py, PyObject, PyResult, Python, ToPyObje
 /// ```
 pub struct Context {
 	pub(crate) globals: Py<PyDict>,
+}
+
+pub trait Hack<'a, Param> {
+	fn f(&self, t: Param) -> Result<&'a pyo3::types::PyCFunction, PyErr>;
+}
+
+impl<'a, F, T> Hack<'a, T> for F
+where
+	T: Into<pyo3::derive_utils::PyFunctionArguments<'a>>,
+	F: Fn(T) -> Result<&'a pyo3::types::PyCFunction, PyErr>,
+{
+	fn f(&self, t: T) -> Result<&'a pyo3::types::PyCFunction, PyErr> {
+		todo!("hello")
+	}
 }
 
 impl Context {
@@ -151,8 +165,15 @@ impl Context {
 	///
 	/// This function temporarily acquires the GIL.
 	/// If you already have the GIL, you can use [`Context::add_wrapped_with_gil`] instead.
-	pub fn add_wrapped(&self, wrapper: &impl Fn(Python) -> PyObject) {
-		self.add_wrapped_with_gil(Python::acquire_gil().python(), wrapper);
+	pub fn add_wrapped<W>(&self, wrapper: &W)
+	where
+		W: for<'a> Hack<'a, Python<'a>>,
+	{
+		Python::with_gil(|py| {
+			let obj = wrapper.f(py).unwrap().to_object(py);
+			let name = obj.getattr(py, "__name__").expect("Missing __name__");
+			self.set_with_gil(py, name.extract(py).unwrap(), obj)
+		})
 	}
 
 	/// Add a wrapped #[pyfunction] or #[pymodule] using its own `__name__`.
