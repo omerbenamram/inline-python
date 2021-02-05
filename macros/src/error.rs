@@ -32,7 +32,7 @@ pub fn compile_error_msg(py: Python, error: PyErr, tokens: TokenStream) -> Token
 		}
 	}
 
-	if let Some(tb) = &error.ptraceback(py) {
+	if let Some(tb) = error.ptraceback(py) {
 		if let Ok((file, line)) = get_traceback_info(tb) {
 			if file == Span::call_site().source_file().path().to_string_lossy() {
 				if let Ok(msg) = value.as_ref(py).str() {
