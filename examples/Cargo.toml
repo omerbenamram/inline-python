@@ -15,6 +15,10 @@ path = "matplotlib.rs"
 name = "rust-fn"
 path = "rust-fn.rs"
 
+[[example]]
+name = "syntax-err"
+path = "syntax-err.rs"
+
 [dependencies]
 inline-python = { path = ".." }
-pyo3 = "0.11.0"
+pyo3 = "0.13.1"

@@ -1,6 +1,6 @@
 use crate::run::run_python_code;
 use crate::PythonBlock;
-use pyo3::{types::PyDict, AsPyRef, FromPyObject, Py, PyObject, PyResult, Python, ToPyObject};
+use pyo3::{types::PyDict, FromPyObject, Py, PyObject, PyResult, Python, ToPyObject};
 
 /// An execution context for Python code.
 ///
